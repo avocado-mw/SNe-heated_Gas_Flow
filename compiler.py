@@ -36,7 +36,7 @@ def read_tracked_particles(sim, haloid, verbose=False):
 
     # importing tracked particles.
     # 'v2' revision contains all tracked particles for the 19 satellite halos selected for this study (see README):
-    path1 = f'{rootPath}Stellar_Feedback_Code/SNeData/tracked_particles.hdf5'
+    path1 = f'{rootPath}Justice_League_Code/Data/tracked_particles.hdf5'
     data = pd.read_hdf(path1, key=key)
     
     time = np.unique(data.time)
@@ -114,6 +114,7 @@ def read_tracked_particles(sim, haloid, verbose=False):
 
     data = pd.merge_asof(data, ts.sort_values('time'), left_on='time', right_on='time', direction='nearest', tolerance=1)
 
+    print(f'> Returning <tracked_particle> dataset <')
     return data
 
 
@@ -179,7 +180,7 @@ def calc_ejected_expelled(sim, haloid, save=True, verbose=True):
                     accreted = pd.concat([accreted, out])
                   
 
-    # apply the calc_angles function along the rows of ejected and expelled
+    # apply the calc_s function along the rows of ejected and expelled
     print('Calculating ejection angles')
     ejected = ejected.apply(calc_angles, axis=1)
     print('Calculating expulsion angles')
@@ -279,15 +280,15 @@ def calc_discharged(sim, haloid, save=True, verbose=True):
     
     if save:
         key = f'{sim}_{str(int(haloid))}'
-        filepath = f'{rootPath}Stellar_Feedback_Code/SNeData/predischarged_particles.hdf5'
+        filepath = f'{rootPath}SNe-heated_Gas_Flow/SNeData/predischarged_particles.hdf5'
         print(f'Saving {key} predischarged particles to {filepath}')
         predischarged.to_hdf(filepath, key=key)
  
-        filepath = f'{rootPath}Stellar_Feedback_Code/SNeData/discharged_particles.hdf5'
+        filepath = f'{rootPath}SNe-heated_Gas_Flow/SNeData/discharged_particles.hdf5'
         print(f'Saving {key} discharged particles to {filepath}')
         discharged.to_hdf(filepath, key=key)
         
-        filepath = f'{rootPath}Stellar_Feedback_Code/SNeData/accreted_particles.hdf5'
+        filepath = f'{rootPath}SNe-heated_Gas_Flow/SNeData/accreted_particles.hdf5'
         print(f'Saving {key} accreted particles to {filepath}')
         accreted.to_hdf(filepath, key=key)
         
@@ -310,6 +311,7 @@ def calc_hot_predischarged(sim, haloid, save=True, verbose=True):
     
     hot_predischarged = pd.DataFrame() # properties pre-discharge for heated gas.
     
+    
     pids = np.unique(data.pid)
     for pid in tqdm.tqdm(pids):
         dat = data[data.pid==pid]
@@ -324,7 +326,7 @@ def calc_hot_predischarged(sim, haloid, save=True, verbose=True):
 
         for i,t2 in enumerate(time[1:]):
                 i += 1
-                if sat_disk[i-1] and outside_disk[i] and (coolontime[i] > time[i-1]):
+                if sat_disk[i-1] and outside_disk[i] and (coolontime[i] > time[i-1]): #discharged and SN-heated
                     out = dat[time==time[i-1]].copy()
                     hot_predischarged = pd.concat([hot_predischarged, out])
                  
@@ -335,7 +337,7 @@ def calc_hot_predischarged(sim, haloid, save=True, verbose=True):
     
     if save:
         key = f'{sim}_{str(int(haloid))}'
-        filepath = f'{rootPath}Stellar_Feedback_Code/SNeData/hot_predischarged_particles.hdf5'
+        filepath = f'{rootPath}SNe-heated_Gas_Flow/SNeData/hot_predischarged_particles.hdf5'
         print(f'Saving {key} pre-dsrg, SN-heated particles to {filepath}')
         hot_predischarged.to_hdf(filepath, key=key)
         
@@ -357,9 +359,9 @@ def calc_reaccreted(sim, haloid, save=True, verbose=True):
     import tqdm
     key = f'{sim}_{str(int(haloid))}'
 
-    path = f'{rootPath}Stellar_Feedback_Code/SNeData/discharged_particles.hdf5'
+    path = f'{rootPath}SNe-heated_Gas_Flow/SNeData/discharged_particles.hdf5'
     discharged = pd.read_hdf(path, key=key)
-    path = f'{rootPath}Stellar_Feedback_Code/SNeData/accreted_particles.hdf5'
+    path = f'{rootPath}SNe-heated_Gas_Flow/SNeData/accreted_particles.hdf5'
     accreted = pd.read_hdf(path, key=key)
 
 
@@ -397,16 +399,23 @@ def calc_reaccreted(sim, haloid, save=True, verbose=True):
 
 
         dCache = dis[0:len(aCache)]
-        aCache['recycleTime'] = np.array(aCache['time']) - np.array(dCache['time'])
 
-        heated = np.array(dCache['snHeated'])
-        aCache['snHeated'] = heated
+        import warnings
+        pd.options.mode.chained_assignment = None #this will supress SettingWithCopyWarning
+        with warnings.catch_warnings():
+            warnings.simplefilter(action='ignore', category=FutureWarning)
+            recyclingTime = np.array(aCache['time']).max() - np.array(dCache['time']).max()
+            aCache.loc['recycleTime'] = recyclingTime
+
+        heated = np.array(dCache['snHeated']).max()
+        aCache.loc['snHeated'] = heated
         reaccreted = pd.concat([reaccreted, aCache])
 
+        pd.options.mode.chained_assignment = "raise"
 
     if save:
         key = f'{sim}_{str(int(haloid))}'
-        filepath = f'{rootPath}Stellar_Feedback_Code/SNeData/reaccreted_particles.hdf5'
+        filepath = f'{rootPath}SNe-heated_Gas_Flow/SNeData/reaccreted_particles.hdf5'
         print(f'Saving {key} reaccreted particle dataset to {filepath}')
         reaccreted.to_hdf(filepath, key=key)
         
@@ -416,8 +425,7 @@ def calc_reaccreted(sim, haloid, save=True, verbose=True):
 
 def calc_snGas(sim, haloid, save=True, verbose=True):
     '''
-    -> Identifies all gas particles that were subject to supernova heating in the
-        simulations.
+    -> I think this calculation is wrong because it's comparing coolontime with time before for all the particles discharged or not.
     '''
     #--------------------------------#
     
@@ -443,7 +451,7 @@ def calc_snGas(sim, haloid, save=True, verbose=True):
     
     if save:
         key = f'{sim}_{str(int(haloid))}'
-        filepath = f'{rootPath}Stellar_Feedback_Code/SNeData/sngas_particles.hdf5'
+        filepath = f'{rootPath}SNe-heated_Gas_Flow/SNeData/sngas_particles.hdf5'
         print(f'Saving {key} SN-heated particles to {filepath}')
         sngas.to_hdf(filepath, key=key)
         
@@ -465,16 +473,16 @@ def read_all_ejected_expelled():
     for key in keys:
         if key in ['h148_3','h148_28','h242_12']: continue;
             
-        ejected1 = pd.read_hdf(f'{rootPath}Stellar_Feedback_Code/SNeData/ejected_particles.hdf5', key=key)
+        ejected1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/ejected_particles.hdf5', key=key)
         ejected1['key'] = key
         ejected = pd.concat([ejected, ejected1])
-        cooled1 = pd.read_hdf(f'{rootPath}Stellar_Feedback_Code/SNeData/cooled_particles.hdf5', key=key)
+        cooled1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/cooled_particles.hdf5', key=key)
         cooled1['key'] = key
         cooled = pd.concat([cooled, cooled1])
-        expelled1 = pd.read_hdf(f'{rootPath}Stellar_Feedback_Code/SNeData/expelled_particles.hdf5', key=key)
+        expelled1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/expelled_particles.hdf5', key=key)
         expelled1['key'] = key
         expelled = pd.concat([expelled, expelled1])
-        accreted1 = pd.read_hdf(f'{rootPath}Stellar_Feedback_Code/SNeData/accreted_particles.hdf5', key=key)
+        accreted1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/accreted_particles.hdf5', key=key)
         accreted1['key'] = key
         accreted = pd.concat([accreted, accreted1])
 
@@ -491,7 +499,7 @@ def read_all_discharged():
     
     predischarged = pd.DataFrame()
     discharged = pd.DataFrame()
-    hot_predischarged= pd.DataFrame()
+    # hot_predischarged= pd.DataFrame()
     
     keys = get_keys()
 
@@ -499,20 +507,20 @@ def read_all_discharged():
         i += 1
         sim = key[:4]
         haloid = int(key[5:])
-        predischarged1 = pd.read_hdf(f'{rootPath}Stellar_Feedback_Code/SNeData/predischarged_particles.hdf5', key=key)
+        predischarged1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/predischarged_particles.hdf5', key=key)
         predischarged1['key'] = key
         predischarged = pd.concat([predischarged, predischarged1])
         
-        discharged1 = pd.read_hdf(f'{rootPath}Stellar_Feedback_Code/SNeData/discharged_particles.hdf5', key=key)
+        discharged1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/discharged_particles.hdf5', key=key)
         discharged1['key'] = key
         discharged = pd.concat([discharged, discharged1])
   
-        hot_predischarged1 = pd.read_hdf(f'{rootPath}Stellar_Feedback_Code/SNeData/hot_predischarged_particles.hdf5', key=key)
-        hot_predischarged1['key'] = key
-        hot_predischarged = pd.concat([hot_predischarged, hot_predischarged1])
+        # hot_predischarged1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/hot_predischarged_particles.hdf5', key=key)
+        # hot_predischarged1['key'] = key
+        # hot_predischarged = pd.concat([hot_predischarged, hot_predischarged1])
        
-    print(f'> Returning (predischarged, discharged, hot_predischarged) for all satellites <')
-    return predischarged, hot_predischarged, discharged
+    print(f'> Returning (predischarged, discharged) for all satellites <')
+    return predischarged, discharged
 
 
 def read_accreted():
@@ -530,11 +538,11 @@ def read_accreted():
         i += 1
         sim = key[:4]
         haloid = int(key[5:])
-        accreted1 = pd.read_hdf(f'{rootPath}Stellar_Feedback_Code/SNeData/accreted_particles.hdf5', key=key)
+        accreted1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/accreted_particles.hdf5', key=key)
         accreted1['key'] = key
         accreted = pd.concat([accreted, accreted1])
         
-        reaccreted1 = pd.read_hdf(f'{rootPath}Stellar_Feedback_Code/SNeData/reaccreted_particles.hdf5', key=key)
+        reaccreted1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/reaccreted_particles.hdf5', key=key)
         reaccreted1['key'] = key
         reaccreted = pd.concat([reaccreted, reaccreted1])
 
@@ -557,10 +565,12 @@ def read_sngas():
         i += 1
         sim = key[:4]
         haloid = int(key[5:])
-        sntotal1 = pd.read_hdf(f'{rootPath}Stellar_Feedback_Code/SNeData/sngas_particles.hdf5',
+        sntotal1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/sngas_particles.hdf5',
                                key=key)
         sntotal1['key'] = key
         sntotal = pd.concat([sntotal, sntotal1])
 
     print(f'> Returning (SN-heated gas) for all satellites <')
     return sntotal
+
+print("compiler.py executed")

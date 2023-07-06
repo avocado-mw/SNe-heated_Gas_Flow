@@ -1,0 +1,13 @@
+# format to ignore
+*.hdf5
+*.data
+*.pyc
+*.csv
+*.pdf
+*.png
+
+# file to ignore
+SNeData/
+.ipynb_checkpoints/
+__pycache__/
+

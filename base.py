@@ -20,7 +20,7 @@ import matplotlib as mpl
 ############################################################################
 ##### Change directory nesting here to locate your data's root folder! #####
 # rootPath = '/home/lonzaric/astro_research/'
-rootPath = '~/Desktop/'
+rootPath = '/home/watanabe/watanabe_MAP/'
 ############################################################################
 
 
@@ -48,11 +48,10 @@ def get_keys():
     -> Simply retrieving satellite identifiers -- or 'keys' -- for all satellites used in to compile gas particle datasets.
     '''
     #--------------------------------#
-    
-    path1 = f'{rootPath}Stellar_Feedback_Code/SNeData/discharged_particles.hdf5'
+    path1 = f'{rootPath}SNe-heated_Gas_Flow/SNeData/discharged_particles.hdf5'
     with pd.HDFStore(path1) as hdf:
         keys = [k[1:] for k in hdf.keys()]
-#     print(*keys)
+    print("found the keys, starting with: ", keys[0])
     return keys
 
 
@@ -118,7 +117,7 @@ def get_stored_filepaths_haloids(sim,z0haloid):
     '''
     #--------------------------------#
 
-    with open(f'{rootPath}Stellar_Feedback_Code/SNeData/filepaths_haloids.pickle','rb') as f:
+    with open(f'{rootPath}Justice_League_Code/RamPressure/Data/filepaths_haloids.pickle','rb') as f:
         d = pickle.load(f)
     try:
         filepaths = d['filepaths'][sim]
@@ -143,7 +142,7 @@ def read_timesteps(sim):
 
     data = []
 #    with open(f'/Users/leoglonz/Desktop/Stellar_Feedback_Code/SNeData/timesteps_data/{sim}.data', 'rb') as f:
-    with open(f'{rootPath}Stellar_Feedback_Code/SNeData/timesteps_data/{sim}.data', 'rb') as f:
+    with open(f'{rootPath}Justice_League_Code/Data/timesteps_data/{sim}.data', 'rb') as f:
         while True:
             try:
                 data.append(pickle.load(f,encoding='latin1'))
@@ -162,7 +161,7 @@ def read_timescales():
     #--------------------------------#
     
     data = []
-    with open(f'{rootPath}Stellar_Feedback_Code/SNeData/QuenchingTimescales.data', 'rb') as f:
+    with open(f'{rootPath}Justice_League_Code/Data/QuenchingTimescales.data', 'rb') as f:
         while True:
             try:
                 data.append(pickle.load(f,encoding='latin1'))
@@ -220,3 +219,5 @@ def get_snap_start(sim,z0haloid):
             continue
     print(f'\t {sim}-{z0haloid}: Start on snapshot {snap_start}, {filepaths[snap_start][-4:]}') # go down from there!
     return snap_start
+
+print("base.py executed")
