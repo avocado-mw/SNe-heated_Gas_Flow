@@ -45,6 +45,6 @@ def calc_sfr(key):
     weight = simstars[trangefilt]['mass'].in_units('Msol') * binnorm
     sfr, thebins = np.histogram(tforms, weights=weight, bins=bins)
     
-    print(f'> Returning (sfr) variable for {key} <')
+    #print(f'> Returning <sfr> variable for {key} <')
     
     return sfr, thebins

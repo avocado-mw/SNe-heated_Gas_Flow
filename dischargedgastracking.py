@@ -89,3 +89,33 @@ def processing(filepath,sim,haloid,save=True):
 
     return output
 
+
+def calc_snHeated(particles):
+    """
+    This function detects the gas particles that are sn-heated by comparing the coolontime 
+    with the time 1 timestep before. Since the detection of sn-heating doesn't depend on any positional argument,
+    this includes both particles being discharged and not.
+    """
+    #iterate detection process by pids
+    pids = np.unique(particles['pid'])
+    index = np.array([]) #initialize
+    for pid in tqdm.tqdm(pids):
+        data = particles[particles['pid']==pid]
+        #create a structured array, containing index of dataframe, pid, time, and coolontime
+        dtype = [('index', int), ('pid', int), ('time', float), ('coolontime', float)]
+        structureArray=np.array(list(zip(data.index, *map(data.get, ['pid','time','coolontime']))), dtype=dtype)
+        #limit to after being heated (avoid mistakingly take the row heated at the same timestep)
+        heatedArray=structureArray[structureArray['time']>structureArray['coolontime']]
+        #extract the list of unique coolontime, sorted by pid and time
+        helper1, helper2 = np.unique(heatedArray['coolontime'], return_index = True)
+        heatedunique = np.sort(heatedArray[helper2], order=['pid','time'])
+
+        timebefore = heatedunique['time'][:-1]
+        #find sn-heated list by comparing the time before and coolontime
+        heatedLocal = heatedunique[1:][heatedunique['coolontime'][1:]>timebefore]
+        indexLocal = heatedLocal['index'].astype(int)
+        index = np.append(index, indexLocal)
+    #based on detected indices, find the designated rows from original dataframe
+    heated = particles[particles.index.isin(index)] 
+
+    return heated

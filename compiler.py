@@ -573,4 +573,59 @@ def read_sngas():
     print(f'> Returning (SN-heated gas) for all satellites <')
     return sntotal
 
+
+def read_one_discharged(key):
+    '''
+    -> Reads predischarged, discharged, accreted, and hot_predischarged into workable dataframes.
+        Only run for one sat.
+    '''
+    #--------------------------------#
+    
+    predischarged = pd.DataFrame()
+    discharged = pd.DataFrame()
+    #hot_predischarged= pd.DataFrame()
+    
+    sim = key[:4]
+    haloid = int(key[5:])
+    predischarged = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/predischarged_particles.hdf5', key=key)
+
+    discharged = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/discharged_particles.hdf5', key=key)
+
+    #hot_predischarged = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/hot_predischarged_particles.hdf5', key=key)
+       
+    print(f'> Returning (predischarged, discharged, hot_predischarged) for satellite {key} <')
+    return predischarged, discharged#, hot_predischarged
+
+
+def read_one_accreted(key):
+    '''
+    -> Reads accreted particles, reaccreted particles into workable dataframes for analysis.
+        Only run for one sat.
+    '''
+    #--------------------------------#
+    
+    accreted = pd.DataFrame()
+    reaccreted = pd.DataFrame()
+
+    sim = key[:4]
+    haloid = int(key[5:])
+
+    accreted = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/accreted_particles.hdf5', key=key)
+    
+    reaccreted = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/reaccreted_particles.hdf5', key=key)
+
+    print(f'> Returning (accreted, reaccreted) for satellite {key} <')
+    return accreted, reaccreted
+
+
+def read_one_expelled(key):
+    
+    expelled = pd.DataFrame()
+    preexpelled = pd.DataFrame()
+    expelled = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/expelled_particles.hdf5', key=key)
+    preexpelled = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/preexpelled_particles.hdf5', key=key)
+
+    return preexpelled, expelled
+
+
 print("compiler.py executed")

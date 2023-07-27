@@ -1,5 +1,7 @@
 from base import *
 import os
+import sys
+import logging
 
 # function to log uncaught exceptions
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -15,8 +17,8 @@ sys.excepthook = handle_exception
 hubble =  0.6776942783267969
 
 def get_iords(sim, z0haloid, filepaths, haloids):
-    #'''Get the particle indices (iords) for all gas particles that have been in the halo since snap_start.'''
-    path = f'../../Data/iords/{sim}_{z0haloid}.pickle'
+    #Get the particle indices (iords) for all gas particles that have been in the halo since snap_start.
+    path = f'../Justice_League_Code/Data/iords/{sim}_{z0haloid}.pickle'
     if os.path.exists(path):
         logger.debug(f'Found iords file at {path}, loading these')
         logger.warning(f'If you have recently changed something, these iords might not be correct')
@@ -284,7 +286,7 @@ if __name__ == '__main__':
     # we save the data as an .hdf5 file since this is meant for large datasets, so that should work pretty good
     output = run_tracking(sim, z0haloid, filepaths, haloids, h1ids)
 
-    savepath = '../../Data/tracked_particles.hdf5'
+    savepath = '../Justice_League_Code/Data/tracked_particles.hdf5'
     logger.debug(f'Saving output to {savepath}')
     output.to_hdf(savepath,key=f'{sim}_{z0haloid}')
     print("Done particle tracking")

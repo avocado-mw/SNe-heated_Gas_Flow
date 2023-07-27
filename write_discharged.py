@@ -1,6 +1,7 @@
 # Summer 2023
 # Mitsuru Watanabe
 # This file will compile discharged gas particles into data set
+# Make sure to run particletracking.py {sim} {haloid} to track particles before running
 # make sure to connect to quirm then activate anaconda environment
 
 
@@ -21,11 +22,12 @@ start = time.time()
 #         'h148_251','h148_282','h229_14','h229_18','h229_20','h229_22',
 #         'h229_49','h242_21','h242_38','h242_69','h329_29','h329_117']
 
+### Used SUmmer 2023 (exclude 'h242_401')
+# keys = ['h148_10', 'h148_12', 'h148_2', 'h148_249', 'h148_251', 'h148_27', 'h148_282', 'h148_3', 'h148_34', 'h148_38', 'h148_4', 'h148_55',
+#         'h148_6', 'h148_65', 'h229_14', 'h229_18', 'h229_20', 'h229_22', 'h229_49', 'h242_10', 'h242_21', 'h242_30', 'h242_38',
+#         'h242_69', 'h242_8', 'h329_117', 'h329_29', 'h329_7']
 
-keys = ['h148_10', 'h148_12', 'h148_249', 'h148_251', 'h148_27', 'h148_282', 'h148_3', 'h148_34', 'h148_38', 'h148_4', 'h148_55',
-        'h148_6', 'h148_65', 'h229_14', 'h229_18', 'h229_20', 'h229_22', 'h229_49', 'h242_10', 'h242_21', 'h242_30', 'h242_38',
-        'h242_401', 'h242_69', 'h242_8', 'h329_117', 'h329_29', 'h329_7']
-        
+keys = []        
 print('Compiling sim gas into sets for the following keys:', keys)
 
 for key in keys:
@@ -43,3 +45,5 @@ for key in keys:
 
 end = time.time()
 print("Program finished execution: ", end - start, " s")
+
+# 'h148_2' took 39 hrs to execute
