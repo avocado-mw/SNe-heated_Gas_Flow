@@ -423,6 +423,91 @@ def calc_reaccreted(sim, haloid, save=True, verbose=True):
     return reaccreted
 
 
+def calc_expelled(key, save=True, verbose=True):
+    #find expelled (permanently) gas
+    #define gas particles as 'expelled' if they are not reaccreted onto the disk of their host satellite
+    #after being discharged
+    
+    if verbose: print(f'Now compiling expelled particles for {key}...')
+    
+    #load discharged, reaccreted gas particles
+    predischarged,discharged = read_one_discharged(key)
+    _,reaccreted = read_one_accreted(key)
+    
+    #create a dataframe for expelled gas
+    expelled = pd.DataFrame()
+    preexpelled = pd.DataFrame()
+    
+    #pid as np.array
+    did = np.array(discharged.pid)
+    rid = np.array(reaccreted.pid)
+    
+    #drop the duplicates of pids and get unique set
+    dfunique = discharged.drop_duplicates(subset=['pid'], keep='last')
+    
+    #find the pid expelled
+    index = np.argsort(rid)
+    sorted_rid = rid[index]  # Sorted list of ids reaccreted
+
+    from collections import Counter
+    #find ids that discharged more than reaccreted (expelled at the last timestep)
+    #also find pids that discharged but never be reaccreted
+    subCount = Counter(did) - Counter(sorted_rid)
+    dunique = np.array(list(subCount.items()))[:,0]
+    expelled = dfunique[np.isin(dfunique.pid, dunique, assume_unique=True)]
+    
+    #do the same for predischarged
+    pre_dfunique = predischarged.drop_duplicates(subset=['pid'], keep='last')
+    preexpelled = pre_dfunique[np.isin(dfunique.pid, dunique, assume_unique=True)]
+    if save:
+        filepath = f'{rootPath}SNe-heated_Gas_Flow/SNeData/expelled_particles.hdf5'
+        print(f'Saving {key} expelled particles to {filepath}')
+        expelled.to_hdf(filepath, key=key)
+        
+        filepath = f'{rootPath}SNe-heated_Gas_Flow/SNeData/preexpelled_particles.hdf5'
+        print(f'Saving {key} preexpelled particles to {filepath}')
+        preexpelled.to_hdf(filepath, key=key)
+        
+    print(f'> Returning (predischarged, discharged, accreted) datasets <')
+    return preexpelled, expelled
+
+
+def calc_snHeated(particles):
+    """
+    This function detects the gas particles that are sn-heated by comparing the coolontime 
+    with the time 1 timestep before. Since the detection of sn-heating doesn't depend on any positional argument,
+    this includes gas particles being SN-heated at any point. However, in order to avoid counting gas particles
+    that are outside the satellite, as those are likely not heated by the satellite, 
+    we should constrain only within the satellite.
+    """
+    import tqdm
+    #iterate detection process by pids
+    pids = np.unique(particles['pid'])
+    index = np.array([]) #initialize
+    for pid in tqdm.tqdm(pids):
+        data = particles[particles['pid']==pid]
+        #create a structured array, containing index of dataframe, pid, time, and coolontime
+        dtype = [('index', int), ('pid', int), ('time', float), ('coolontime', float)]
+        structureArray=np.array(list(zip(data.index, *map(data.get, ['pid','time','coolontime']))), dtype=dtype)
+        #limit to after being heated (avoid mistakingly take the row heated at the same timestep)
+        heatedArray=structureArray[structureArray['time']>structureArray['coolontime']]
+        #extract the list of unique coolontime, sorted by pid and time
+        helper1, helper2 = np.unique(heatedArray['coolontime'], return_index = True)
+        heatedunique = np.sort(heatedArray[helper2], order=['pid','time'])
+
+        timebefore = heatedunique['time'][:-1]
+        #find sn-heated list by comparing the time before and coolontime
+        heatedLocal = heatedunique[1:][heatedunique['coolontime'][1:]>timebefore]
+        indexLocal = heatedLocal['index'].astype(int)
+        index = np.append(index, indexLocal)
+    #based on detected indices, find the designated rows from original dataframe
+    heated = particles[particles.index.isin(index)] 
+    #drop if gas is outside satellite (e.g. host, other sat, IGM)
+    heated = heated[heated['in_sat']==True]
+
+    return heated
+
+
 def calc_snGas(sim, haloid, save=True, verbose=True):
     '''
     -> I think this calculation is wrong because it's comparing coolontime with time before for all the particles discharged or not.
@@ -505,6 +590,9 @@ def read_all_discharged():
 
     for i,key in enumerate(keys):
         i += 1
+        if key == 'h242_401':
+            continue
+
         sim = key[:4]
         haloid = int(key[5:])
         predischarged1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/predischarged_particles.hdf5', key=key)
@@ -536,6 +624,10 @@ def read_accreted():
 
     for i,key in enumerate(keys):
         i += 1
+
+        if key == 'h242_401':
+            continue
+
         sim = key[:4]
         haloid = int(key[5:])
         accreted1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/accreted_particles.hdf5', key=key)
@@ -550,10 +642,42 @@ def read_accreted():
     return accreted, reaccreted
 
 
+def read_expelled():
+    '''
+    -> Reads all expelled particles, preexpelled particles into workable dataframes for analysis.
+    '''
+    #--------------------------------#
+    
+    expelled = pd.DataFrame()
+    preexpelled = pd.DataFrame()
+
+    keys = get_keys()
+
+    for i,key in enumerate(keys):
+        i += 1
+
+        if key == 'h242_401':
+            continue
+        
+        sim = key[:4]
+        haloid = int(key[5:])
+        expelled1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/expelled_particles.hdf5', key=key)
+        expelled1['key'] = key
+        expelled = pd.concat([expelled, expelled1])
+        
+        preexpelled1 = pd.read_hdf(f'{rootPath}SNe-heated_Gas_Flow/SNeData/preexpelled_particles.hdf5', key=key)
+        preexpelled1['key'] = key
+        preexpelled = pd.concat([preexpelled, preexpelled1])
+
+    print(f'> Returning (expelled, preexpelled) for all satellites <')
+    return preexpelled, expelled
+
+    
 def read_sngas():
     '''
     -> Reads all gas particles in selected satellites ever SN-heated (irrespective of whether or not
         they were discharged.
+    Starting Summer 23, this function was found to be not used for accurately calculating SN-heated gas. Therefore, use `sneHeated==True` instead.
     '''
     #--------------------------------#
     

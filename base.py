@@ -47,11 +47,16 @@ def get_keys():
     '''
     -> Simply retrieving satellite identifiers -- or 'keys' -- for all satellites used in to compile gas particle datasets.
     '''
+    import h5py
     #--------------------------------#
     path1 = f'{rootPath}SNe-heated_Gas_Flow/SNeData/discharged_particles.hdf5'
-    with pd.HDFStore(path1) as hdf:
-        keys = [k[1:] for k in hdf.keys()]
-    print("found the keys, starting with: ", keys[0])
+    
+    # with pd.HDFStore(path1) as hdf:
+    #     keys = [k[1:] for k in hdf.keys()]
+    #     print("found the keys, starting with: ", keys[0])
+    with h5py.File(path1) as data:
+        keys = [k[1:] for k in data.keys()]
+        print("found the keys, starting with: ", keys[0])
     return keys
 
 
