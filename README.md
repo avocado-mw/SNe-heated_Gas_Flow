@@ -22,39 +22,29 @@ The research was conducted to answer the questions of the following:
 - Of the gas that are heated by SNe, what fraction of the gas is lost from the satellite
 - Is there any angle dependency on discharged gas? If any dependent on angles, how in different times in infall, and from which the gas is discharged, the role of ram pressure stripping varies??
 
-
-## Directory
-This repository is structured in the following diagram.
-
-.
-├── codes                   
-│    ├── base code          # repetitive functions (.py)
-│    ├── scripts            # functions used in a notebook (.py)
-│    └── notebooks          # analysis codes and plots (.ipynb)
-├── archiveData             # archive of hdf5 files (.hdf5)
-├── logs                    # archive of tracking log (.log)
-├── plots                   # plot storage (.pdf, .png)
-├── SNeData                 # file storage (.csv, .hdf5, .data)
-└── README.md
-
-Base code includes repetitive functions necessary in computing and analyzing data, scripts include computing and outputting data, and notebooks include analysis and plotting.
-
     
 ## Basic Code
 * `base.py`
-* `analysis.py` (not actively used in this repo)
+* `analysis.py`
+
+(not actively used in this repo)
 * `compiler.py`
+
 Major contributions include the redefinition of expelled gas, and all gas that are SN-heated. Most of the functions are inherited from past researchers.
 
 
 ## Scripts
 * `particletracking.py`
+
 Tracks particles within satellites. Use `runall.sh` to run for all satellites.
 * `write_discharged.py`
+
 Compiles discharged gas particles into data set.
 * `infallinganalysis.py`
+
 Calculates the distance and SFR over time, and mass loading factor.
 * `dischargedgastracking.py`
+
 Calculates the energy of discharged particle.
 
     
@@ -62,22 +52,31 @@ Calculates the energy of discharged particle.
 Notebooks are separated based on the kinds of research questions addressing and the time in the semester the research is conducted. Each notebook has a header explaining the main research question and key findings, and often mentions other parts of the notebook assembly following before or after. Most notebooks require `base.py`, `analyzer.py`, `compiler.py` to be compiled. Some require its child `.py` file as well. All require the connection to quirm which stores tracked particles data frame.
 
 * `particletrackingpractice.ipynb`
+
 Produces 3 plots: particletracking, particletracking_advanced, and fraction data.
 * `rampressurepractice.ipynb`
+
 Had troubles with the advanced technique Hollis used for calculating the ram pressure, so I halted my analysis.
 * `stellarfeedbackanalysis.ipynb`
+
 Requires `write_discharged.py` to run first (probably should sign in to quirm to do these). Inherited from Leo’s python code. 
 * `infallinganalysis.ipynb`
+
 Analyzes the relationship b/w SFH and infalling types on SN-heated gas loss and how mass loading factor or fraction of gas loss changes with respect to mass and time. Requires `infallinganalysis.py` to be compiled. This work is followed by `F23_SNe_Gas_Loss.ipynb`.
 * `dischargedgastracking.ipynb`
+
 Traces the discharged gas particles over different snapshots and figure out the relation to SN-heating, as well as calculating the energy that discharged gas particles have when exitted, requires `dischargedgastracking.py` to be compiled.
 * `snheating.ipynb`
+
 Traces the fraction of gas loss due to supernovae over time. I found that the ram pressure does boost the expulsion of the gas both discharged and expelled, confirming the result from infalling analysis. This is a follow-up from `dischargedgastracking.ipynb`. 
 * `F23_Plotting.ipynb`
+
 Plots the infall trajectory of each individual galaxy as well as the corresponding gas loss and star formation rate.
 * `F23_SNe_Gas_Loss.ipynb`
+
 Computes and plots the fraction of SN-driven outflow and the fraction of perimanent gas loss at different times in infall, namely at 1 virial radius away or at 1st pericentric passage.
 * `S24_ExitAngleOverTime.ipynb`
+
 Analyzes the relationship between the launched angle of discharged gas and the time it discharged or the stellar mass of the galaxy from which the gas is discharged.
 
 
@@ -100,8 +99,10 @@ All gas particles treated in this research are sourced from 28 satellites in DC 
 
 **Other files stored under quirm**
 * `all-satellite-data-overtime.csv`
+
 Last snapshot of each galaxy with information, from Akin's. Used in `infalling analysis.ipynb`.
 * `avg_mlf_calculation.csv`
+
 Average MLF calculation used in `infalling analysis.ipynb`.
 
     
