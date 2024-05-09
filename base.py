@@ -55,7 +55,7 @@ def get_keys():
     #     keys = [k[1:] for k in hdf.keys()]
     #     print("found the keys, starting with: ", keys[0])
     with h5py.File(path1) as data:
-        keys = [k[1:] for k in data.keys()]
+        keys = [k[:] for k in data.keys()]
         print("found the keys, starting with: ", keys[0])
     return keys
 
